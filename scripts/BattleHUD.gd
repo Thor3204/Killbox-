@@ -1,0 +1,5 @@
+extends Control
+class_name BattleHUD
+signal attack_pressed
+signal ability_pressed
+signal quit_pressed
