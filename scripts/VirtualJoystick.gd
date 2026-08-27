@@ -1,7 +1,7 @@
 extends Control
-class_name VirtualJoystick
-## Joystick virtual táctil para movimiento (docs/UI-UX.md: abajo-izquierda).
-## También responde al mouse para poder probar el juego en escritorio.
+class_name KillboxVirtualJoystick
+## Joystick virtual táctil para movimiento.
+## Responde también al mouse para pruebas en escritorio.
 
 signal direction_changed(dir: Vector2)
 
