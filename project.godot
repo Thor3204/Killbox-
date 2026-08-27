@@ -1,16 +1,14 @@
-; Engine configuration file.
+; KILLBOX - Godot 4 mobile game
 config_version=5
 
 [application]
 config/name="KILLBOX"
-config/description="Supervivencia móvil: alianzas, combate y traición en Nova City."
+config/description="Supervivencia, estrategia, alianzas y traición en Nova City."
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://art/killbox_logo.svg"
-boot_splash/image="res://art/killbox_intro.svg"
-boot_splash/bg_color=Color(0.01,0.016,0.021,1)
-boot_splash/show_image=true
-boot_splash/fullsize=true
+boot_splash/show_image=false
+boot_splash/bg_color=Color(0.015,0.02,0.028,1)
 
 [autoload]
 RemoteConfig="*res://autoload/RemoteConfig.gd"
@@ -28,6 +26,7 @@ window/handheld/orientation="landscape"
 window/energy_saving/keep_screen_on=true
 
 [rendering]
-renderer/rendering_method="mobile"
-renderer/rendering_method.mobile="mobile"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.015,0.02,0.028,1)
