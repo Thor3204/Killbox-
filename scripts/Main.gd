@@ -1,9 +1,7 @@
 extends Node
 class_name Main
 ## Orquestador de pantallas: Login -> Lobby -> Partida -> Fin -> Lobby.
-## Es la raíz del árbol (res://scenes/Main.tscn). Todo el juego se arma por
-## código (sin escenas .tscn adicionales) para que sea fácil de mantener
-## y versionar por GitHub.
+## Todo el juego se arma por código para facilitar mantenimiento y versionado.
 
 var screen_layer: CanvasLayer
 var world_layer: Node2D
@@ -18,7 +16,6 @@ func _ready() -> void:
 	add_child(screen_layer)
 	world_layer = Node2D.new()
 	add_child(world_layer)
-
 	show_login()
 
 func _clear_screen() -> void:
@@ -70,7 +67,7 @@ func start_match() -> void:
 	current_hud.alliance_propose_pressed.connect(_on_alliance_propose)
 	current_hud.alliance_accept_pressed.connect(_on_alliance_accept)
 	current_hud.alliance_leave_pressed.connect(_on_alliance_leave)
-	current_hud.joystick.direction_changed.connect(func(dir):
+	current_hud.joystick.direction_changed.connect(func(dir: Vector2):
 		if match_manager.local_player:
 			match_manager.local_player.input_vector = dir
 	)
@@ -81,7 +78,6 @@ func start_match() -> void:
 	match_manager.player_eliminated.connect(_on_player_eliminated)
 	match_manager.match_ended.connect(_on_match_ended)
 	match_manager.map_event_triggered.connect(current_hud.show_map_event)
-
 	_attach_camera_when_ready()
 
 func _attach_camera_when_ready() -> void:
@@ -102,11 +98,11 @@ func _find_nearest_ally_target() -> Player:
 	if not match_manager or not match_manager.local_player:
 		return null
 	var best: Player = null
-	var best_dist := 140.0
+	var best_dist: float = 140.0
 	for p in match_manager.players:
 		if p == match_manager.local_player or not p.is_alive:
 			continue
-		var d := p.global_position.distance_to(match_manager.local_player.global_position)
+		var d: float = p.global_position.distance_to(match_manager.local_player.global_position)
 		if d < best_dist:
 			best_dist = d
 			best = p
