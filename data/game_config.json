@@ -1,0 +1,17 @@
+{
+  "cycle_seconds": 30,
+  "prep_seconds": 12,
+  "bot_count": 11,
+  "kill_reward_box": 90,
+  "map_event_chance": 0.5,
+  "danger_zone_damage_per_second": 6,
+  "blackout_seconds": 6,
+  "supply_drop_heal": 30,
+  "supply_drop_speed_mult": 1.25,
+  "supply_drop_seconds": 6,
+  "trap_damage": 18,
+  "trap_slow_mult": 0.5,
+  "trap_slow_seconds": 2.5,
+  "feature_alliances": true,
+  "feature_map_events": true
+}

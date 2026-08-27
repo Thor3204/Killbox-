@@ -1,0 +1,14 @@
+# Godot 4
+.godot/
+.import/
+export_credentials.cfg
+
+# Builds
+build/
+builds/
+*.apk
+*.aab
+
+# OS
+.DS_Store
+Thumbs.db
