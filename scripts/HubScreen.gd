@@ -1,0 +1,7 @@
+extends Control
+class_name HubScreen
+signal play_pressed
+signal character_pressed
+signal settings_pressed
+signal inventory_pressed
+signal shop_pressed
