@@ -1,16 +1,18 @@
 extends Node
-## Game
-## Estado de sesión del jugador (perfil local, guardado en disco).
+## Estado local V1. No hay backend ni dinero real.
 
 signal stars_changed(new_total: int)
 signal box_changed(new_total: float)
 
 const SAVE_PATH := "user://profile.json"
+const TEST_STARTING_BOX := 2000.0
+const CHARACTER_CHANGE_COST := 200.0
 
-var player_name := "Superviviente"
+var player_name := ""
 var selected_character_id := "rex"
 var stars := 0
-var box := 0.0
+var box := TEST_STARTING_BOX
+var profile_completed := false
 var main_ref: Node = null
 
 func _ready() -> void:
@@ -19,15 +21,30 @@ func _ready() -> void:
 func register_main(main_node: Node) -> void:
 	main_ref = main_node
 
+func has_profile() -> bool:
+	return profile_completed and not player_name.strip_edges().is_empty()
+
 func set_player_name(new_name: String) -> void:
 	player_name = new_name.strip_edges()
 	if player_name.is_empty():
 		player_name = "Superviviente"
 	_save_profile()
 
-func select_character(character_id: String) -> void:
+func complete_profile(character_id: String) -> void:
 	selected_character_id = character_id
+	profile_completed = true
 	_save_profile()
+
+func select_character(character_id: String) -> bool:
+	if character_id == selected_character_id:
+		return true
+	if box < CHARACTER_CHANGE_COST:
+		return false
+	box -= CHARACTER_CHANGE_COST
+	selected_character_id = character_id
+	box_changed.emit(box)
+	_save_profile()
+	return true
 
 func add_stars(amount: int) -> void:
 	stars += amount
@@ -45,6 +62,7 @@ func _save_profile() -> void:
 		"selected_character_id": selected_character_id,
 		"stars": stars,
 		"box": box,
+		"profile_completed": profile_completed,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -59,7 +77,8 @@ func _load_profile() -> void:
 	var parsed = JSON.parse_string(f.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
-	player_name = parsed.get("player_name", player_name)
-	selected_character_id = parsed.get("selected_character_id", selected_character_id)
+	player_name = str(parsed.get("player_name", ""))
+	selected_character_id = str(parsed.get("selected_character_id", selected_character_id))
 	stars = int(parsed.get("stars", stars))
-	box = float(parsed.get("box", box))
+	box = float(parsed.get("box", TEST_STARTING_BOX))
+	profile_completed = bool(parsed.get("profile_completed", false))
