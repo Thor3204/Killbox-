@@ -1,0 +1,25 @@
+name: KILLBOX Unity APK
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'UnityProject/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: UnityProject
+          targetPlatform: Android
+          unityVersion: 6000.0.43f1
+          buildMethod: KillboxBuild.BuildAndroid
+      - uses: actions/upload-artifact@v4
+        with:
+          name: killbox-unity-apk
+          path: UnityProject/Build/Killbox.apk
