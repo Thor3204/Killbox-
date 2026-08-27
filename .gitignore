@@ -1,14 +1,15 @@
 # Godot 4
 .godot/
 .import/
-export_credentials.cfg
+export_presets.cfg.bak
+android/
+*.translation
 
-# Builds
+# Build output (lo genera GitHub Actions, no se versiona)
 build/
-builds/
 *.apk
 *.aab
 
-# OS
+# SO
 .DS_Store
 Thumbs.db

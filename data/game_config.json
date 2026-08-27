@@ -1,17 +1,16 @@
 {
-  "cycle_seconds": 30,
-  "prep_seconds": 12,
+  "min_app_version": "0.1.0",
+  "latest_app_version": "0.1.0",
+  "kill_reward_box": 90.0,
+  "cycle_prep_seconds": 15.0,
+  "cycle_hunt_seconds": 15.0,
   "bot_count": 11,
-  "kill_reward_box": 90,
-  "map_event_chance": 0.5,
-  "danger_zone_damage_per_second": 6,
-  "blackout_seconds": 6,
-  "supply_drop_heal": 30,
-  "supply_drop_speed_mult": 1.25,
-  "supply_drop_seconds": 6,
-  "trap_damage": 18,
-  "trap_slow_mult": 0.5,
-  "trap_slow_seconds": 2.5,
-  "feature_alliances": true,
-  "feature_map_events": true
+  "map_events": ["apagon", "zona_peligrosa", "suministro", "alarma"],
+  "characters": {
+    "rex": { "ability_cooldown": 12.0 },
+    "luna": { "ability_cooldown": 14.0 },
+    "max": { "ability_cooldown": 10.0 },
+    "maya": { "ability_cooldown": 16.0 },
+    "kai": { "ability_cooldown": 11.0 }
+  }
 }
