@@ -1,0 +1,3 @@
+extends Control
+class_name SettingsScreen
+signal back_pressed
