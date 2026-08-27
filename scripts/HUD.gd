@@ -1,7 +1,7 @@
 extends Control
 class_name HUD
-## HUD de partida (docs/UI-UX.md): vida/vivos/ciclo arriba, joystick
-## abajo-izquierda, ataque/habilidad abajo-derecha, alianza contextual.
+## HUD de partida: vida/vivos/ciclo arriba, joystick abajo-izquierda,
+## ataque/habilidad abajo-derecha y controles de alianza contextuales.
 
 signal attack_pressed
 signal ability_pressed
@@ -9,7 +9,7 @@ signal alliance_propose_pressed
 signal alliance_accept_pressed
 signal alliance_leave_pressed
 
-var joystick: VirtualJoystick
+var joystick: KillboxVirtualJoystick
 
 var health_fill: ColorRect
 var alive_label: Label
@@ -76,7 +76,7 @@ func _ready() -> void:
 	blackout_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(blackout_overlay)
 
-	joystick = VirtualJoystick.new()
+	joystick = KillboxVirtualJoystick.new()
 	joystick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	joystick.position = Vector2(40, -180)
 	add_child(joystick)
@@ -123,7 +123,7 @@ func _style_label(lbl: Label, font_size: int = 15) -> void:
 
 func set_phase(phase: String, seconds_left: float, _cycle: int) -> void:
 	phase_label.text = phase
-	var secs := int(ceil(seconds_left))
+	var secs: int = int(ceil(seconds_left))
 	timer_label.text = "%02d:%02d" % [secs / 60, secs % 60]
 
 func set_alive_count(count: int, total: int) -> void:
