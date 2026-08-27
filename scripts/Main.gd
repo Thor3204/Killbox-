@@ -1,7 +1,6 @@
 extends Node
 class_name Main
-## Flujo visual V1: Perfil -> Personaje -> Lobby -> Partida -> Resultado.
-## Economía, promotores y backend permanecen fuera de esta fase.
+## Flujo V1: Intro -> Perfil inicial -> Personaje -> Lobby -> Partida -> Resultado.
 
 var screen_layer: CanvasLayer
 var world_layer: Node2D
@@ -16,7 +15,7 @@ func _ready() -> void:
 	add_child(screen_layer)
 	world_layer = Node2D.new()
 	add_child(world_layer)
-	show_login()
+	_show_intro()
 
 func _clear_screen() -> void:
 	for c in screen_layer.get_children(): c.queue_free()
@@ -28,19 +27,32 @@ func _clear_world() -> void:
 		match_manager.queue_free()
 		match_manager = null
 
+func _show_intro() -> void:
+	_clear_screen(); _clear_world()
+	var intro := IntroScreen.new()
+	screen_layer.add_child(intro)
+	intro.finished.connect(_after_intro)
+	current_screen = intro
+
+func _after_intro() -> void:
+	if Game.has_profile():
+		show_lobby()
+	else:
+		show_login()
+
 func show_login() -> void:
 	_clear_screen(); _clear_world()
 	var login := LoginScreen.new()
 	screen_layer.add_child(login)
-	login.logged_in.connect(show_character_select)
+	login.logged_in.connect(func(): show_character_select(true))
 	current_screen = login
 
-func show_character_select() -> void:
+func show_character_select(initial_setup: bool = false) -> void:
 	_clear_screen()
 	var select := CharacterSelectScreen.new()
+	select.initial_setup = initial_setup
 	screen_layer.add_child(select)
-	select.continue_pressed.connect(show_lobby)
-	select.back_pressed.connect(show_login)
+	select.continue_pressed.connect(func(): show_lobby())
 	current_screen = select
 
 func show_lobby() -> void:
@@ -49,12 +61,12 @@ func show_lobby() -> void:
 	var lobby := LobbyScreen.new()
 	screen_layer.add_child(lobby)
 	lobby.play_pressed.connect(start_match)
-	lobby.character_pressed.connect(show_character_select)
+	lobby.character_pressed.connect(func(): show_character_select(false))
 	current_screen = lobby
 
 func start_match() -> void:
 	RemoteConfig.stop_polling()
-	_clear_screen()
+	_clear_screen(); _clear_world()
 	current_map = NovaCity.new()
 	world_layer.add_child(current_map)
 	await get_tree().process_frame
@@ -62,21 +74,14 @@ func start_match() -> void:
 	add_child(match_manager)
 	var spawns: Array = current_map.spawn_points
 	if spawns.is_empty():
-		current_map.queue_free()
-		current_map = NovaCity.new()
-		world_layer.add_child(current_map)
-		await get_tree().process_frame
-		spawns = current_map.spawn_points
-	if spawns.is_empty():
 		show_lobby()
 		return
 	match_manager.start_match(current_map, spawns, RemoteConfig.get_bot_count())
-
 	current_hud = HUD.new()
 	screen_layer.add_child(current_hud)
 	current_screen = current_hud
-	current_hud.attack_pressed.connect(func(): match_manager.local_attack())
-	current_hud.ability_pressed.connect(func(): match_manager.local_use_ability())
+	current_hud.attack_pressed.connect(func(): if match_manager: match_manager.local_attack())
+	current_hud.ability_pressed.connect(func(): if match_manager: match_manager.local_use_ability())
 	current_hud.alliance_propose_pressed.connect(_on_alliance_propose)
 	current_hud.alliance_accept_pressed.connect(_on_alliance_accept)
 	current_hud.alliance_leave_pressed.connect(_on_alliance_leave)
