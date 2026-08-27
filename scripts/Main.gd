@@ -1,7 +1,7 @@
 extends Node
 class_name Main
-## Orquestador de pantallas: Login -> Lobby -> Partida -> Fin -> Lobby.
-## Todo el juego se arma por código para facilitar mantenimiento y versionado.
+## Flujo visual V1: Perfil -> Personaje -> Lobby -> Partida -> Resultado.
+## Economía, promotores y backend permanecen fuera de esta fase.
 
 var screen_layer: CanvasLayer
 var world_layer: Node2D
@@ -19,59 +19,70 @@ func _ready() -> void:
 	show_login()
 
 func _clear_screen() -> void:
-	for c in screen_layer.get_children():
-		c.queue_free()
+	for c in screen_layer.get_children(): c.queue_free()
 	current_screen = null
 
 func _clear_world() -> void:
-	for c in world_layer.get_children():
-		c.queue_free()
+	for c in world_layer.get_children(): c.queue_free()
 	if match_manager:
 		match_manager.queue_free()
 		match_manager = null
 
 func show_login() -> void:
-	_clear_screen()
-	_clear_world()
+	_clear_screen(); _clear_world()
 	var login := LoginScreen.new()
 	screen_layer.add_child(login)
-	login.logged_in.connect(show_lobby)
+	login.logged_in.connect(show_character_select)
 	current_screen = login
 
-func show_lobby() -> void:
+func show_character_select() -> void:
 	_clear_screen()
-	_clear_world()
+	var select := CharacterSelectScreen.new()
+	screen_layer.add_child(select)
+	select.continue_pressed.connect(show_lobby)
+	select.back_pressed.connect(show_login)
+	current_screen = select
+
+func show_lobby() -> void:
+	_clear_screen(); _clear_world()
 	RemoteConfig.start_polling()
 	var lobby := LobbyScreen.new()
 	screen_layer.add_child(lobby)
 	lobby.play_pressed.connect(start_match)
+	lobby.character_pressed.connect(show_character_select)
 	current_screen = lobby
 
 func start_match() -> void:
 	RemoteConfig.stop_polling()
 	_clear_screen()
-
 	current_map = NovaCity.new()
 	world_layer.add_child(current_map)
-
+	await get_tree().process_frame
 	match_manager = MatchManager.new()
 	add_child(match_manager)
-	match_manager.start_match(current_map, current_map.spawn_points, RemoteConfig.get_bot_count())
+	var spawns: Array = current_map.spawn_points
+	if spawns.is_empty():
+		current_map.queue_free()
+		current_map = NovaCity.new()
+		world_layer.add_child(current_map)
+		await get_tree().process_frame
+		spawns = current_map.spawn_points
+	if spawns.is_empty():
+		show_lobby()
+		return
+	match_manager.start_match(current_map, spawns, RemoteConfig.get_bot_count())
 
 	current_hud = HUD.new()
 	screen_layer.add_child(current_hud)
 	current_screen = current_hud
-
 	current_hud.attack_pressed.connect(func(): match_manager.local_attack())
 	current_hud.ability_pressed.connect(func(): match_manager.local_use_ability())
 	current_hud.alliance_propose_pressed.connect(_on_alliance_propose)
 	current_hud.alliance_accept_pressed.connect(_on_alliance_accept)
 	current_hud.alliance_leave_pressed.connect(_on_alliance_leave)
 	current_hud.joystick.direction_changed.connect(func(dir: Vector2):
-		if match_manager.local_player:
-			match_manager.local_player.input_vector = dir
+		if match_manager and match_manager.local_player: match_manager.local_player.input_vector = dir
 	)
-
 	match_manager.cycle_phase_changed.connect(current_hud.set_phase)
 	match_manager.alive_count_changed.connect(current_hud.set_alive_count)
 	match_manager.local_health_changed.connect(current_hud.set_health)
@@ -84,28 +95,22 @@ func _attach_camera_when_ready() -> void:
 	await get_tree().process_frame
 	if match_manager and match_manager.local_player:
 		var cam := Camera2D.new()
-		cam.zoom = Vector2(1.1, 1.1)
+		cam.zoom = Vector2(0.9, 0.9)
 		cam.position_smoothing_enabled = true
 		cam.position_smoothing_speed = 6.0
-		cam.limit_left = -1000
-		cam.limit_right = 1000
-		cam.limit_top = -600
-		cam.limit_bottom = 600
+		cam.limit_left = -1000; cam.limit_right = 1000
+		cam.limit_top = -600; cam.limit_bottom = 600
 		match_manager.local_player.add_child(cam)
 		cam.make_current()
 
 func _find_nearest_ally_target() -> Player:
-	if not match_manager or not match_manager.local_player:
-		return null
+	if not match_manager or not match_manager.local_player: return null
 	var best: Player = null
 	var best_dist: float = 140.0
 	for p in match_manager.players:
-		if p == match_manager.local_player or not p.is_alive:
-			continue
+		if p == match_manager.local_player or not p.is_alive: continue
 		var d: float = p.global_position.distance_to(match_manager.local_player.global_position)
-		if d < best_dist:
-			best_dist = d
-			best = p
+		if d < best_dist: best_dist = d; best = p
 	return best
 
 func _on_alliance_propose() -> void:
@@ -126,8 +131,7 @@ func _on_alliance_leave() -> void:
 		current_hud.flash_message("Abandonaste la alianza")
 
 func _on_player_eliminated(victim: Player, killer: Player, reward_each: float, recipients: Array) -> void:
-	if current_hud:
-		current_hud.show_kill_feed(killer.display_name, victim.display_name, reward_each, recipients.size())
+	if current_hud: current_hud.show_kill_feed(killer.display_name, victim.display_name, reward_each, recipients.size())
 
 func _on_match_ended(summary: Dictionary) -> void:
 	_clear_screen()
