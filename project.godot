@@ -1,38 +1,33 @@
 ; Engine configuration file.
-; It's best edited using the editor UI and not directly,
-; since the parameters that go here are not all obvious.
-;
-; Format:
-;   [section] ; section goes between []
-;   param=value ; assign values to parameters
-
 config_version=5
 
 [application]
-
 config/name="KILLBOX"
-config/description="Battle royale móvil de supervivencia, alianzas y traición."
+config/description="Supervivencia móvil: alianzas, combate y traición en Nova City."
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
-config/icon="res://icon.svg"
-boot_splash/bg_color=Color(0.043137, 0.043137, 0.054902, 1)
+config/icon="res://art/killbox_logo.svg"
+boot_splash/image="res://art/killbox_intro.svg"
+boot_splash/bg_color=Color(0.01,0.016,0.021,1)
+boot_splash/show_image=true
+boot_splash/fullsize=true
 
 [autoload]
-
 RemoteConfig="*res://autoload/RemoteConfig.gd"
 Game="*res://autoload/Game.gd"
 CharacterData="*res://autoload/CharacterData.gd"
 
 [display]
-
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation="landscape"
 window/energy_saving/keep_screen_on=true
 
 [rendering]
-
 renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
