@@ -35,24 +35,25 @@ func _show_intro() -> void:
 	current_screen = intro
 
 func _after_intro() -> void:
-	if Game.has_profile():
-		show_lobby()
-	else:
-		show_login()
+	if Game.has_profile(): show_lobby()
+	else: show_login()
 
 func show_login() -> void:
 	_clear_screen(); _clear_world()
 	var login := LoginScreen.new()
 	screen_layer.add_child(login)
-	login.logged_in.connect(func(): show_character_select(true))
+	login.logged_in.connect(_on_first_login)
 	current_screen = login
+
+func _on_first_login() -> void:
+	show_character_select(true)
 
 func show_character_select(initial_setup: bool = false) -> void:
 	_clear_screen()
 	var select := CharacterSelectScreen.new()
 	select.initial_setup = initial_setup
 	screen_layer.add_child(select)
-	select.continue_pressed.connect(func(): show_lobby())
+	select.continue_pressed.connect(show_lobby)
 	current_screen = select
 
 func show_lobby() -> void:
@@ -61,8 +62,11 @@ func show_lobby() -> void:
 	var lobby := LobbyScreen.new()
 	screen_layer.add_child(lobby)
 	lobby.play_pressed.connect(start_match)
-	lobby.character_pressed.connect(func(): show_character_select(false))
+	lobby.character_pressed.connect(_on_character_change)
 	current_screen = lobby
+
+func _on_character_change() -> void:
+	show_character_select(false)
 
 func start_match() -> void:
 	RemoteConfig.stop_polling()
@@ -72,22 +76,20 @@ func start_match() -> void:
 	await get_tree().process_frame
 	match_manager = MatchManager.new()
 	add_child(match_manager)
-	var spawns: Array = current_map.spawn_points
+	var spawns:Array = current_map.spawn_points
 	if spawns.is_empty():
 		show_lobby()
 		return
-	match_manager.start_match(current_map, spawns, RemoteConfig.get_bot_count())
+	match_manager.start_match(current_map,spawns,RemoteConfig.get_bot_count())
 	current_hud = HUD.new()
 	screen_layer.add_child(current_hud)
 	current_screen = current_hud
-	current_hud.attack_pressed.connect(func(): if match_manager: match_manager.local_attack())
-	current_hud.ability_pressed.connect(func(): if match_manager: match_manager.local_use_ability())
+	current_hud.attack_pressed.connect(_on_attack)
+	current_hud.ability_pressed.connect(_on_ability)
 	current_hud.alliance_propose_pressed.connect(_on_alliance_propose)
 	current_hud.alliance_accept_pressed.connect(_on_alliance_accept)
 	current_hud.alliance_leave_pressed.connect(_on_alliance_leave)
-	current_hud.joystick.direction_changed.connect(func(dir: Vector2):
-		if match_manager and match_manager.local_player: match_manager.local_player.input_vector = dir
-	)
+	current_hud.joystick.direction_changed.connect(_on_move_input)
 	match_manager.cycle_phase_changed.connect(current_hud.set_phase)
 	match_manager.alive_count_changed.connect(current_hud.set_alive_count)
 	match_manager.local_health_changed.connect(current_hud.set_health)
@@ -96,38 +98,48 @@ func start_match() -> void:
 	match_manager.map_event_triggered.connect(current_hud.show_map_event)
 	_attach_camera_when_ready()
 
+func _on_move_input(dir:Vector2) -> void:
+	if match_manager and match_manager.local_player:
+		match_manager.local_player.input_vector=dir
+
+func _on_attack() -> void:
+	if match_manager: match_manager.local_attack()
+
+func _on_ability() -> void:
+	if match_manager: match_manager.local_use_ability()
+
 func _attach_camera_when_ready() -> void:
 	await get_tree().process_frame
 	if match_manager and match_manager.local_player:
-		var cam := Camera2D.new()
-		cam.zoom = Vector2(0.9, 0.9)
-		cam.position_smoothing_enabled = true
-		cam.position_smoothing_speed = 6.0
-		cam.limit_left = -1000; cam.limit_right = 1000
-		cam.limit_top = -600; cam.limit_bottom = 600
+		var cam:=Camera2D.new()
+		cam.zoom=Vector2(0.9,0.9)
+		cam.position_smoothing_enabled=true
+		cam.position_smoothing_speed=6.0
+		cam.limit_left=-1000; cam.limit_right=1000
+		cam.limit_top=-600; cam.limit_bottom=600
 		match_manager.local_player.add_child(cam)
 		cam.make_current()
 
 func _find_nearest_ally_target() -> Player:
 	if not match_manager or not match_manager.local_player: return null
-	var best: Player = null
-	var best_dist: float = 140.0
+	var best:Player=null
+	var best_dist:float=140.0
 	for p in match_manager.players:
-		if p == match_manager.local_player or not p.is_alive: continue
-		var d: float = p.global_position.distance_to(match_manager.local_player.global_position)
-		if d < best_dist: best_dist = d; best = p
+		if p==match_manager.local_player or not p.is_alive: continue
+		var d:float=p.global_position.distance_to(match_manager.local_player.global_position)
+		if d<best_dist: best_dist=d; best=p
 	return best
 
 func _on_alliance_propose() -> void:
-	var target := _find_nearest_ally_target()
+	var target:=_find_nearest_ally_target()
 	if target and match_manager:
-		match_manager.alliance_manager.propose("local", target.player_id)
+		match_manager.alliance_manager.propose("local",target.player_id)
 		current_hud.flash_message("Alianza propuesta a %s" % target.display_name)
 
 func _on_alliance_accept() -> void:
-	var target := _find_nearest_ally_target()
-	if target and match_manager and match_manager.alliance_manager.has_pending_proposal(target.player_id, "local"):
-		match_manager.alliance_manager.accept(target.player_id, "local")
+	var target:=_find_nearest_ally_target()
+	if target and match_manager and match_manager.alliance_manager.has_pending_proposal(target.player_id,"local"):
+		match_manager.alliance_manager.accept(target.player_id,"local")
 		current_hud.flash_message("Alianza formada con %s" % target.display_name)
 
 func _on_alliance_leave() -> void:
@@ -135,13 +147,13 @@ func _on_alliance_leave() -> void:
 		match_manager.alliance_manager.leave("local")
 		current_hud.flash_message("Abandonaste la alianza")
 
-func _on_player_eliminated(victim: Player, killer: Player, reward_each: float, recipients: Array) -> void:
-	if current_hud: current_hud.show_kill_feed(killer.display_name, victim.display_name, reward_each, recipients.size())
+func _on_player_eliminated(victim:Player,killer:Player,reward_each:float,recipients:Array) -> void:
+	if current_hud: current_hud.show_kill_feed(killer.display_name,victim.display_name,reward_each,recipients.size())
 
-func _on_match_ended(summary: Dictionary) -> void:
+func _on_match_ended(summary:Dictionary) -> void:
 	_clear_screen()
-	var overlay := MatchEndOverlay.new()
+	var overlay:=MatchEndOverlay.new()
 	screen_layer.add_child(overlay)
 	overlay.setup(summary)
 	overlay.continue_pressed.connect(show_lobby)
-	current_screen = overlay
+	current_screen=overlay
